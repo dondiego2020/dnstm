@@ -19,50 +19,27 @@ import (
 	"github.com/net2share/dnstm/internal/system"
 )
 
-const (
-	BaseDir = "/etc/dnstm/certs"
-)
-
-// Manager handles certificate operations.
-type Manager struct {
-	baseDir string
-}
-
 // CertInfo holds certificate information.
 type CertInfo struct {
-	Domain      string
 	CertPath    string
 	KeyPath     string
 	Fingerprint string
 }
 
-// NewManager creates a new certificate manager.
-func NewManager() *Manager {
-	return &Manager{
-		baseDir: BaseDir,
-	}
-}
-
-// NewManagerWithDir creates a new certificate manager with a custom base directory.
-func NewManagerWithDir(baseDir string) *Manager {
-	return &Manager{
-		baseDir: baseDir,
-	}
-}
-
-// GetOrCreate returns existing certificate info for a domain, or creates a new one.
-func (m *Manager) GetOrCreate(domain string) (*CertInfo, error) {
-	info := m.Get(domain)
+// GetOrCreateInDir returns existing certificate info from dir, or generates a new one.
+func GetOrCreateInDir(dir, domain string) (*CertInfo, error) {
+	info := GetFromDir(dir)
 	if info != nil && info.Fingerprint != "" {
 		return info, nil
 	}
 
-	return m.Generate(domain)
+	return GenerateInDir(dir, domain)
 }
 
-// Get returns certificate info for a domain if it exists.
-func (m *Manager) Get(domain string) *CertInfo {
-	certPath, keyPath := m.GetPaths(domain)
+// GetFromDir reads existing cert info from dir, returns nil if not found.
+func GetFromDir(dir string) *CertInfo {
+	certPath := filepath.Join(dir, "cert.pem")
+	keyPath := filepath.Join(dir, "key.pem")
 
 	if !CertsExist(certPath, keyPath) {
 		return nil
@@ -74,16 +51,16 @@ func (m *Manager) Get(domain string) *CertInfo {
 	}
 
 	return &CertInfo{
-		Domain:      domain,
 		CertPath:    certPath,
 		KeyPath:     keyPath,
 		Fingerprint: fingerprint,
 	}
 }
 
-// Generate creates a new certificate for a domain.
-func (m *Manager) Generate(domain string) (*CertInfo, error) {
-	certPath, keyPath := m.GetPaths(domain)
+// GenerateInDir generates a certificate into dir/cert.pem and dir/key.pem.
+func GenerateInDir(dir, domain string) (*CertInfo, error) {
+	certPath := filepath.Join(dir, "cert.pem")
+	keyPath := filepath.Join(dir, "key.pem")
 
 	fingerprint, err := GenerateCertificate(certPath, keyPath, domain)
 	if err != nil {
@@ -91,61 +68,10 @@ func (m *Manager) Generate(domain string) (*CertInfo, error) {
 	}
 
 	return &CertInfo{
-		Domain:      domain,
 		CertPath:    certPath,
 		KeyPath:     keyPath,
 		Fingerprint: fingerprint,
 	}, nil
-}
-
-// List returns all certificates in the base directory.
-func (m *Manager) List() []*CertInfo {
-	var certs []*CertInfo
-
-	files, err := os.ReadDir(m.baseDir)
-	if err != nil {
-		return certs
-	}
-
-	// Find all cert files and extract domains
-	seen := make(map[string]bool)
-	for _, file := range files {
-		if strings.HasSuffix(file.Name(), "_cert.pem") {
-			domain := strings.TrimSuffix(file.Name(), "_cert.pem")
-			domain = strings.ReplaceAll(domain, "_", ".")
-			if !seen[domain] {
-				seen[domain] = true
-				if info := m.Get(domain); info != nil {
-					certs = append(certs, info)
-				}
-			}
-		}
-	}
-
-	return certs
-}
-
-// Delete removes a certificate for a domain.
-func (m *Manager) Delete(domain string) error {
-	certPath, keyPath := m.GetPaths(domain)
-
-	if err := os.Remove(certPath); err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("failed to remove certificate: %w", err)
-	}
-
-	if err := os.Remove(keyPath); err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("failed to remove key: %w", err)
-	}
-
-	return nil
-}
-
-// GetPaths returns the certificate and key paths for a domain.
-func (m *Manager) GetPaths(domain string) (certPath, keyPath string) {
-	sanitized := strings.ReplaceAll(domain, ".", "_")
-	certPath = filepath.Join(m.baseDir, sanitized+"_cert.pem")
-	keyPath = filepath.Join(m.baseDir, sanitized+"_key.pem")
-	return
 }
 
 // GenerateCertificate creates a self-signed ECDSA P-256 certificate.

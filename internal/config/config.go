@@ -12,8 +12,6 @@ import (
 const (
 	ConfigDir  = "/etc/dnstm"
 	ConfigFile = "config.json"
-	CertsDir   = "/etc/dnstm/certs"
-	KeysDir    = "/etc/dnstm/keys"
 	TunnelsDir = "/etc/dnstm/tunnels"
 )
 

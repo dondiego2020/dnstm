@@ -81,17 +81,16 @@ Runs in multi-mode only. Listens on port 53 and routes DNS queries to appropriat
 
 Individual systemd services for each configured tunnel. Each runs on an auto-allocated port (5310+).
 
-### Certificate Manager (`/etc/dnstm/certs/`)
+### Crypto Material (per-tunnel)
 
-Manages TLS certificates for Slipstream transports:
-- ECDSA P-256 keys
-- 10-year validity
+Each tunnel stores its cryptographic material in `/etc/dnstm/tunnels/<tag>/`:
+
+**Slipstream** — TLS certificates:
+- `cert.pem`, `key.pem` (ECDSA P-256, 10-year validity, self-signed)
 - SHA256 fingerprints for client verification
 
-### Key Manager (`/etc/dnstm/keys/`)
-
-Manages Curve25519 key pairs for DNSTT transports:
-- 64-character hex strings
+**DNSTT** — Curve25519 key pairs:
+- `server.key`, `server.pub` (64-character hex strings)
 - Public key for client verification
 
 ## Directory Structure

@@ -13,14 +13,14 @@ import (
 func TestSlipstream_LocalMode(t *testing.T) {
 	env := NewE2EEnv(t)
 
-	// Generate certificate
-	certsDir := filepath.Join(env.ConfigDir, "certs")
-	if err := os.MkdirAll(certsDir, 0755); err != nil {
-		t.Fatalf("failed to create certs dir: %v", err)
+	// Generate certificate in per-tunnel directory
+	tunnelDir := filepath.Join(env.ConfigDir, "tunnels", "test-slip")
+	if err := os.MkdirAll(tunnelDir, 0755); err != nil {
+		t.Fatalf("failed to create tunnel dir: %v", err)
 	}
 
-	certPath := filepath.Join(certsDir, "test_cert.pem")
-	keyPath := filepath.Join(certsDir, "test_key.pem")
+	certPath := filepath.Join(tunnelDir, "cert.pem")
+	keyPath := filepath.Join(tunnelDir, "key.pem")
 
 	fingerprint, err := certs.GenerateCertificate(certPath, keyPath, "test.example.com")
 	if err != nil {
@@ -114,14 +114,14 @@ func TestSlipstream_LocalMode(t *testing.T) {
 func TestSlipstream_WithShadowsocks(t *testing.T) {
 	env := NewE2EEnv(t)
 
-	// Generate certificate
-	certsDir := filepath.Join(env.ConfigDir, "certs")
-	if err := os.MkdirAll(certsDir, 0755); err != nil {
-		t.Fatalf("failed to create certs dir: %v", err)
+	// Generate certificate in per-tunnel directory
+	tunnelDir := filepath.Join(env.ConfigDir, "tunnels", "test-ss")
+	if err := os.MkdirAll(tunnelDir, 0755); err != nil {
+		t.Fatalf("failed to create tunnel dir: %v", err)
 	}
 
-	certPath := filepath.Join(certsDir, "test_cert.pem")
-	keyPath := filepath.Join(certsDir, "test_key.pem")
+	certPath := filepath.Join(tunnelDir, "cert.pem")
+	keyPath := filepath.Join(tunnelDir, "key.pem")
 
 	_, err := certs.GenerateCertificate(certPath, keyPath, "test.example.com")
 	if err != nil {

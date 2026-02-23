@@ -14,34 +14,34 @@ func TestMultiTunnel_Configuration(t *testing.T) {
 	// Test that multiple tunnels can be configured
 	env := NewE2EEnv(t)
 
-	// Generate crypto material for multiple tunnels
-	certsDir := filepath.Join(env.ConfigDir, "certs")
-	keysDir := filepath.Join(env.ConfigDir, "keys")
-
-	for _, dir := range []string{certsDir, keysDir} {
-		if err := os.MkdirAll(dir, 0755); err != nil {
-			t.Fatalf("failed to create dir: %v", err)
+	// Generate crypto material in per-tunnel directories
+	for _, tag := range []string{"slipstream-1", "slipstream-2", "dnstt-1"} {
+		if err := os.MkdirAll(filepath.Join(env.ConfigDir, "tunnels", tag), 0755); err != nil {
+			t.Fatalf("failed to create tunnel dir: %v", err)
 		}
 	}
 
-	// Generate cert for slipstream tunnel
-	slip1Cert := filepath.Join(certsDir, "slip1_cert.pem")
-	slip1Key := filepath.Join(certsDir, "slip1_key.pem")
+	// Generate cert for slipstream tunnels
+	slip1Dir := filepath.Join(env.ConfigDir, "tunnels", "slipstream-1")
+	slip1Cert := filepath.Join(slip1Dir, "cert.pem")
+	slip1Key := filepath.Join(slip1Dir, "key.pem")
 	_, err := certs.GenerateCertificate(slip1Cert, slip1Key, "slip1.example.com")
 	if err != nil {
 		t.Fatalf("failed to generate certificate: %v", err)
 	}
 
-	slip2Cert := filepath.Join(certsDir, "slip2_cert.pem")
-	slip2Key := filepath.Join(certsDir, "slip2_key.pem")
+	slip2Dir := filepath.Join(env.ConfigDir, "tunnels", "slipstream-2")
+	slip2Cert := filepath.Join(slip2Dir, "cert.pem")
+	slip2Key := filepath.Join(slip2Dir, "key.pem")
 	_, err = certs.GenerateCertificate(slip2Cert, slip2Key, "slip2.example.com")
 	if err != nil {
 		t.Fatalf("failed to generate certificate: %v", err)
 	}
 
 	// Generate keys for DNSTT tunnel
-	dnsttPriv := filepath.Join(keysDir, "dnstt_server.key")
-	dnsttPub := filepath.Join(keysDir, "dnstt_server.pub")
+	dnsttDir := filepath.Join(env.ConfigDir, "tunnels", "dnstt-1")
+	dnsttPriv := filepath.Join(dnsttDir, "server.key")
+	dnsttPub := filepath.Join(dnsttDir, "server.pub")
 	_, err = keys.Generate(dnsttPriv, dnsttPub)
 	if err != nil {
 		t.Fatalf("failed to generate keys: %v", err)

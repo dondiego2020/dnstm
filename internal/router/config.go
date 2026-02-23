@@ -8,8 +8,6 @@ import (
 const (
 	ConfigDir  = config.ConfigDir
 	ConfigFile = config.ConfigFile
-	CertsDir   = config.CertsDir
-	KeysDir    = config.KeysDir
 	TunnelsDir = config.TunnelsDir
 )
 

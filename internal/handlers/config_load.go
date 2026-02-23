@@ -177,21 +177,26 @@ func HandleConfigLoad(ctx *actions.Context) error {
 
 	// Show connection info for each tunnel
 	ctx.Output.Info("Connection Info:")
-	certMgr := certs.NewManager()
-	keyMgr := keys.NewManager()
 	for _, tunnel := range newCfg.Tunnels {
 		ctx.Output.Printf("\n  %s (%s):\n", tunnel.Tag, tunnel.Domain)
+		tunnelDir := filepath.Join(config.TunnelsDir, tunnel.Tag)
 		if tunnel.Transport == config.TransportSlipstream {
-			if info := certMgr.Get(tunnel.Domain); info != nil {
-				ctx.Output.Printf("    Fingerprint: %s\n", certs.FormatFingerprint(info.Fingerprint))
-				ctx.Output.Printf("    Cert:        %s\n", info.CertPath)
-				ctx.Output.Printf("    Key:         %s\n", info.KeyPath)
+			certPath := filepath.Join(tunnelDir, "cert.pem")
+			keyPath := filepath.Join(tunnelDir, "key.pem")
+			fingerprint, err := certs.ReadCertificateFingerprint(certPath)
+			if err == nil {
+				ctx.Output.Printf("    Fingerprint: %s\n", certs.FormatFingerprint(fingerprint))
+				ctx.Output.Printf("    Cert:        %s\n", certPath)
+				ctx.Output.Printf("    Key:         %s\n", keyPath)
 			}
 		} else if tunnel.Transport == config.TransportDNSTT {
-			if info := keyMgr.Get(tunnel.Domain); info != nil {
-				ctx.Output.Printf("    Public Key:   %s\n", info.PublicKey)
-				ctx.Output.Printf("    Private Key:  %s\n", info.PrivateKeyPath)
-				ctx.Output.Printf("    Public File:  %s\n", info.PublicKeyPath)
+			pubKeyPath := filepath.Join(tunnelDir, "server.pub")
+			pubKey, err := keys.ReadPublicKey(pubKeyPath)
+			if err == nil {
+				privKeyPath := filepath.Join(tunnelDir, "server.key")
+				ctx.Output.Printf("    Public Key:   %s\n", pubKey)
+				ctx.Output.Printf("    Private Key:  %s\n", privKeyPath)
+				ctx.Output.Printf("    Public File:  %s\n", pubKeyPath)
 			}
 		}
 	}
@@ -215,8 +220,6 @@ func ensureTunnelService(ctx *actions.Context, tunnelCfg *config.TunnelConfig, c
 
 	// Handle crypto material based on transport type
 	if tunnelCfg.Transport == config.TransportSlipstream {
-		certMgr := certs.NewManager()
-
 		// Initialize slipstream config if nil
 		if tunnelCfg.Slipstream == nil {
 			tunnelCfg.Slipstream = &config.SlipstreamConfig{}
@@ -258,8 +261,8 @@ func ensureTunnelService(ctx *actions.Context, tunnelCfg *config.TunnelConfig, c
 
 			ctx.Output.Status(fmt.Sprintf("Using provided certificate for %s", tunnelCfg.Domain))
 		} else {
-			// No paths provided, generate new certificate
-			certInfo, err := certMgr.GetOrCreate(tunnelCfg.Domain)
+			// No paths provided, generate new certificate into tunnel dir
+			certInfo, err := certs.GetOrCreateInDir(tunnelDir, tunnelCfg.Domain)
 			if err != nil {
 				return fmt.Errorf("failed to generate certificate: %w", err)
 			}
@@ -268,8 +271,6 @@ func ensureTunnelService(ctx *actions.Context, tunnelCfg *config.TunnelConfig, c
 			ctx.Output.Status(fmt.Sprintf("Generated certificate for %s", tunnelCfg.Domain))
 		}
 	} else if tunnelCfg.Transport == config.TransportDNSTT {
-		keyMgr := keys.NewManager()
-
 		// Initialize DNSTT config if nil
 		if tunnelCfg.DNSTT == nil {
 			tunnelCfg.DNSTT = &config.DNSTTConfig{MTU: 1232}
@@ -291,8 +292,8 @@ func ensureTunnelService(ctx *actions.Context, tunnelCfg *config.TunnelConfig, c
 
 			ctx.Output.Status(fmt.Sprintf("Using provided key for %s", tunnelCfg.Domain))
 		} else {
-			// No key path provided, generate new keys
-			keyInfo, err := keyMgr.GetOrCreate(tunnelCfg.Domain)
+			// No key path provided, generate new keys into tunnel dir
+			keyInfo, err := keys.GetOrCreateInDir(tunnelDir)
 			if err != nil {
 				return fmt.Errorf("failed to generate keys: %w", err)
 			}

@@ -24,11 +24,9 @@ This shows:
 
 ## Certificate/Key Files
 
-Certificate and key files are stored on the server:
-- Slipstream certificates: `/etc/dnstm/certs/<domain>_cert.pem`
-- DNSTT public keys: `/etc/dnstm/keys/<domain>_server.pub`
-
-Domain names use underscores (e.g., `a.example.com` → `a_example_com_cert.pem`).
+Certificate and key files are stored per-tunnel on the server:
+- Slipstream certificates: `/etc/dnstm/tunnels/<tag>/cert.pem`
+- DNSTT public keys: `/etc/dnstm/tunnels/<tag>/server.pub`
 
 ## Slipstream + Shadowsocks
 
@@ -44,7 +42,7 @@ Note the domain, password, and encryption method.
 ### 2. Copy Certificate
 
 ```bash
-scp root@server:/etc/dnstm/certs/<domain>_cert.pem ./cert.pem
+scp root@server:/etc/dnstm/tunnels/<tag>/cert.pem ./cert.pem
 ```
 
 ### 3. Start Tunnel and Connect
@@ -68,7 +66,7 @@ curl -x socks5h://127.0.0.1:1080 https://httpbin.org/ip
 ### 1. Copy Certificate
 
 ```bash
-scp root@server:/etc/dnstm/certs/<domain>_cert.pem ./cert.pem
+scp root@server:/etc/dnstm/tunnels/<tag>/cert.pem ./cert.pem
 ```
 
 ### 2. Connect
@@ -90,7 +88,7 @@ curl -x socks5h://127.0.0.1:1080 https://httpbin.org/ip
 ### 1. Copy Certificate
 
 ```bash
-scp root@server:/etc/dnstm/certs/<domain>_cert.pem ./cert.pem
+scp root@server:/etc/dnstm/tunnels/<tag>/cert.pem ./cert.pem
 ```
 
 ### 2. Start Tunnel
@@ -142,8 +140,8 @@ dnstt-client -udp 8.8.8.8:53 -pubkey PUBLIC_KEY DOMAIN 127.0.0.1:1080
 
 Or with key file:
 ```bash
-scp root@server:/etc/dnstm/keys/<domain>_server.pub ./
-dnstt-client -udp 8.8.8.8:53 -pubkey-file <domain>_server.pub DOMAIN 127.0.0.1:1080
+scp root@server:/etc/dnstm/tunnels/<tag>/server.pub ./
+dnstt-client -udp 8.8.8.8:53 -pubkey-file server.pub DOMAIN 127.0.0.1:1080
 ```
 
 ### 3. Test
@@ -224,7 +222,7 @@ If UDP is blocked, use DNS-over-TLS or DNS-over-HTTPS:
 
 Copy the latest certificate from server:
 ```bash
-scp root@server:/etc/dnstm/certs/<domain>_cert.pem ./cert.pem
+scp root@server:/etc/dnstm/tunnels/<tag>/cert.pem ./cert.pem
 ```
 
 ### Wrong Public Key (DNSTT)

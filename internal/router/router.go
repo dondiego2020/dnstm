@@ -3,10 +3,12 @@ package router
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/net2share/dnstm/internal/certs"
 	"github.com/net2share/dnstm/internal/config"
 	"github.com/net2share/dnstm/internal/dnsrouter"
+	"github.com/net2share/dnstm/internal/keys"
 	"github.com/net2share/dnstm/internal/network"
 	"github.com/net2share/dnstm/internal/system"
 )
@@ -16,7 +18,6 @@ type Router struct {
 	config    *config.Config
 	tunnels   map[string]*Tunnel
 	dnsrouter *dnsrouter.Service
-	certMgr   *certs.Manager
 }
 
 // New creates a new router from configuration.
@@ -29,7 +30,6 @@ func New(cfg *config.Config) (*Router, error) {
 		config:    cfg,
 		tunnels:   make(map[string]*Tunnel),
 		dnsrouter: dnsrouter.NewService(),
-		certMgr:   certs.NewManager(),
 	}
 
 	// Create tunnels from config
@@ -343,10 +343,15 @@ func (r *Router) Reload() error {
 	return nil
 }
 
-// ensureCryptoMaterial ensures certificates or keys exist for the domain.
+// ensureCryptoMaterial ensures certificates or keys exist for the tunnel.
 func (r *Router) ensureCryptoMaterial(cfg *config.TunnelConfig) error {
+	tunnelDir := filepath.Join(config.TunnelsDir, cfg.Tag)
+	if err := os.MkdirAll(tunnelDir, 0750); err != nil {
+		return fmt.Errorf("failed to create tunnel directory: %w", err)
+	}
+
 	if cfg.Transport == config.TransportSlipstream {
-		certInfo, err := r.certMgr.GetOrCreate(cfg.Domain)
+		certInfo, err := certs.GetOrCreateInDir(tunnelDir, cfg.Domain)
 		if err != nil {
 			return fmt.Errorf("failed to get certificate: %w", err)
 		}
@@ -357,6 +362,16 @@ func (r *Router) ensureCryptoMaterial(cfg *config.TunnelConfig) error {
 		}
 		cfg.Slipstream.Cert = certInfo.CertPath
 		cfg.Slipstream.Key = certInfo.KeyPath
+	} else if cfg.Transport == config.TransportDNSTT {
+		keyInfo, err := keys.GetOrCreateInDir(tunnelDir)
+		if err != nil {
+			return fmt.Errorf("failed to get keys: %w", err)
+		}
+
+		if cfg.DNSTT == nil {
+			cfg.DNSTT = &config.DNSTTConfig{MTU: 1232}
+		}
+		cfg.DNSTT.PrivateKey = keyInfo.PrivateKeyPath
 	}
 
 	return nil
@@ -455,7 +470,7 @@ func Initialize() error {
 	}
 
 	// Create subdirectories with 0750 (owned by dnstm, so accessible to dnstm)
-	subdirs := []string{config.CertsDir, config.KeysDir, config.TunnelsDir}
+	subdirs := []string{config.TunnelsDir}
 	for _, dir := range subdirs {
 		if err := os.MkdirAll(dir, 0750); err != nil {
 			return fmt.Errorf("failed to create directory %s: %w", dir, err)

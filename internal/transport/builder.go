@@ -8,9 +8,7 @@ import (
 	"strings"
 
 	"github.com/net2share/dnstm/internal/binary"
-	"github.com/net2share/dnstm/internal/certs"
 	"github.com/net2share/dnstm/internal/config"
-	"github.com/net2share/dnstm/internal/keys"
 	"github.com/net2share/dnstm/internal/service"
 	"github.com/net2share/dnstm/internal/system"
 )
@@ -63,27 +61,11 @@ type BuildOptions struct {
 }
 
 // Builder builds command lines for transport instances.
-type Builder struct {
-	certMgr *certs.Manager
-	keyMgr  *keys.Manager
-}
+type Builder struct{}
 
 // NewBuilder creates a new transport builder.
 func NewBuilder() *Builder {
-	return &Builder{
-		certMgr: certs.NewManager(),
-		keyMgr:  keys.NewManager(),
-	}
-}
-
-// GetCertInfo returns certificate info for a domain.
-func (b *Builder) GetCertInfo(domain string) (*certs.CertInfo, error) {
-	return b.certMgr.GetOrCreate(domain)
-}
-
-// GetKeyInfo returns key info for a domain.
-func (b *Builder) GetKeyInfo(domain string) (*keys.KeyInfo, error) {
-	return b.keyMgr.GetOrCreate(domain)
+	return &Builder{}
 }
 
 // TunnelBuildResult contains the result of building a tunnel service.
@@ -158,17 +140,19 @@ func (b *Builder) BuildTunnelService(tunnel *config.TunnelConfig, backend *confi
 
 // buildSlipstreamTunnel builds a Slipstream-based tunnel service.
 func (b *Builder) buildSlipstreamTunnel(tunnel *config.TunnelConfig, backend *config.BackendConfig, targetAddr string, opts *BuildOptions, result *TunnelBuildResult) (*TunnelBuildResult, error) {
-	// Get certificate
-	certInfo, err := b.certMgr.GetOrCreate(tunnel.Domain)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get certificate: %w", err)
+	// Read cert/key paths from tunnel config (already set before builder is called)
+	if tunnel.Slipstream == nil || tunnel.Slipstream.Cert == "" || tunnel.Slipstream.Key == "" {
+		return nil, fmt.Errorf("slipstream cert/key paths not set for tunnel %s", tunnel.Tag)
 	}
 
-	result.ReadPaths = append(result.ReadPaths, certInfo.CertPath, certInfo.KeyPath)
+	certPath := tunnel.Slipstream.Cert
+	keyPath := tunnel.Slipstream.Key
+
+	result.ReadPaths = append(result.ReadPaths, certPath, keyPath)
 
 	// Slipstream + Shadowsocks uses ssserver with slipstream as plugin (SIP003)
 	if backend.Type == config.BackendShadowsocks {
-		return b.buildSlipstreamShadowsocksTunnel(tunnel, backend, certInfo, opts, result)
+		return b.buildSlipstreamShadowsocksTunnel(tunnel, backend, certPath, keyPath, opts, result)
 	}
 
 	// Slipstream standalone mode (SOCKS, SSH, or custom target)
@@ -177,8 +161,8 @@ func (b *Builder) buildSlipstreamTunnel(tunnel *config.TunnelConfig, backend *co
 		"--domain", tunnel.Domain,
 		"--dns-listen-port", fmt.Sprintf("%d", opts.BindPort),
 		"--target-address", targetAddr,
-		"--cert", certInfo.CertPath,
-		"--key", certInfo.KeyPath,
+		"--cert", certPath,
+		"--key", keyPath,
 	}
 
 	result.ExecStart = fmt.Sprintf("%s %s", SlipstreamBinaryPath(), strings.Join(args, " "))
@@ -186,7 +170,7 @@ func (b *Builder) buildSlipstreamTunnel(tunnel *config.TunnelConfig, backend *co
 }
 
 // buildSlipstreamShadowsocksTunnel builds a Slipstream+Shadowsocks tunnel using SIP003 plugin mode.
-func (b *Builder) buildSlipstreamShadowsocksTunnel(tunnel *config.TunnelConfig, backend *config.BackendConfig, certInfo *certs.CertInfo, opts *BuildOptions, result *TunnelBuildResult) (*TunnelBuildResult, error) {
+func (b *Builder) buildSlipstreamShadowsocksTunnel(tunnel *config.TunnelConfig, backend *config.BackendConfig, certPath, keyPath string, opts *BuildOptions, result *TunnelBuildResult) (*TunnelBuildResult, error) {
 	if backend.Shadowsocks == nil {
 		return nil, fmt.Errorf("shadowsocks backend missing configuration")
 	}
@@ -198,7 +182,7 @@ func (b *Builder) buildSlipstreamShadowsocksTunnel(tunnel *config.TunnelConfig, 
 
 	// Build plugin options
 	pluginOpts := fmt.Sprintf("domain=%s;dns-listen-host=%s;dns-listen-port=%d;cert=%s;key=%s",
-		tunnel.Domain, opts.BindHost, opts.BindPort, certInfo.CertPath, certInfo.KeyPath)
+		tunnel.Domain, opts.BindHost, opts.BindPort, certPath, keyPath)
 
 	// Write Shadowsocks config file
 	ssConfig := map[string]interface{}{
@@ -238,23 +222,23 @@ func (b *Builder) buildDNSTTTunnel(tunnel *config.TunnelConfig, backend *config.
 		return nil, fmt.Errorf("DNSTT transport does not support Shadowsocks backend")
 	}
 
-	// Get keys
-	keyInfo, err := b.keyMgr.GetOrCreate(tunnel.Domain)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get keys: %w", err)
+	// Read key path from tunnel config (already set before builder is called)
+	if tunnel.DNSTT == nil || tunnel.DNSTT.PrivateKey == "" {
+		return nil, fmt.Errorf("dnstt private key path not set for tunnel %s", tunnel.Tag)
 	}
 
-	result.ReadPaths = append(result.ReadPaths, keyInfo.PrivateKeyPath)
+	privKeyPath := tunnel.DNSTT.PrivateKey
+	result.ReadPaths = append(result.ReadPaths, privKeyPath)
 
 	mtu := "1232"
-	if tunnel.DNSTT != nil && tunnel.DNSTT.MTU > 0 {
+	if tunnel.DNSTT.MTU > 0 {
 		mtu = fmt.Sprintf("%d", tunnel.DNSTT.MTU)
 	}
 
 	// Build dnstt-server command
 	args := []string{
 		"-udp", fmt.Sprintf("%s:%d", opts.BindHost, opts.BindPort),
-		"-privkey-file", keyInfo.PrivateKeyPath,
+		"-privkey-file", privKeyPath,
 		"-mtu", mtu,
 		tunnel.Domain,
 		targetAddr,

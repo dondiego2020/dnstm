@@ -10,6 +10,7 @@ import (
 	"github.com/net2share/dnstm/internal/config"
 	"github.com/net2share/dnstm/internal/keys"
 	"github.com/net2share/dnstm/internal/router"
+	"github.com/net2share/dnstm/internal/system"
 	"github.com/net2share/dnstm/internal/transport"
 	"github.com/net2share/go-corelib/tui"
 )
@@ -300,44 +301,43 @@ func createTunnel(ctx *actions.Context, tunnelCfg *config.TunnelConfig, cfg *con
 	}
 	ctx.Output.Status("Transport binaries ready")
 
-	// Step 2: Generate certificates/keys
-	currentStep++
-	ctx.Output.Step(currentStep, totalSteps, "Generating cryptographic material...")
-	var fingerprint string
-	var publicKey string
-	if tunnelCfg.Transport == config.TransportSlipstream {
-		certMgr := certs.NewManager()
-		certInfo, err := certMgr.GetOrCreate(tunnelCfg.Domain)
-		if err != nil {
-			return fmt.Errorf("failed to generate certificate: %w", err)
-		}
-		fingerprint = certInfo.Fingerprint
-		// Store cert paths in slipstream config
-		tunnelCfg.Slipstream = &config.SlipstreamConfig{
-			Cert: certInfo.CertPath,
-			Key:  certInfo.KeyPath,
-		}
-		ctx.Output.Status("TLS certificate ready")
-	} else if tunnelCfg.Transport == config.TransportDNSTT {
-		keyMgr := keys.NewManager()
-		keyInfo, err := keyMgr.GetOrCreate(tunnelCfg.Domain)
-		if err != nil {
-			return fmt.Errorf("failed to generate keys: %w", err)
-		}
-		publicKey = keyInfo.PublicKey
-		// Store private key path
-		tunnelCfg.DNSTT.PrivateKey = keyInfo.PrivateKeyPath
-		ctx.Output.Status("Curve25519 keys ready")
-	}
-
-	// Step 3: Create tunnel config directory
+	// Step 2: Create tunnel config directory
 	currentStep++
 	ctx.Output.Step(currentStep, totalSteps, "Creating tunnel configuration...")
 	tunnelDir := filepath.Join(config.TunnelsDir, tunnelCfg.Tag)
 	if err := os.MkdirAll(tunnelDir, 0750); err != nil {
 		return fmt.Errorf("failed to create tunnel directory: %w", err)
 	}
+	if err := system.ChownDirToDnstm(tunnelDir); err != nil {
+		_ = err
+	}
 	ctx.Output.Status("Tunnel directory created")
+
+	// Step 3: Generate certificates/keys into tunnel directory
+	currentStep++
+	ctx.Output.Step(currentStep, totalSteps, "Generating cryptographic material...")
+	var fingerprint string
+	var publicKey string
+	if tunnelCfg.Transport == config.TransportSlipstream {
+		certInfo, err := certs.GetOrCreateInDir(tunnelDir, tunnelCfg.Domain)
+		if err != nil {
+			return fmt.Errorf("failed to generate certificate: %w", err)
+		}
+		fingerprint = certInfo.Fingerprint
+		tunnelCfg.Slipstream = &config.SlipstreamConfig{
+			Cert: certInfo.CertPath,
+			Key:  certInfo.KeyPath,
+		}
+		ctx.Output.Status("TLS certificate ready")
+	} else if tunnelCfg.Transport == config.TransportDNSTT {
+		keyInfo, err := keys.GetOrCreateInDir(tunnelDir)
+		if err != nil {
+			return fmt.Errorf("failed to generate keys: %w", err)
+		}
+		publicKey = keyInfo.PublicKey
+		tunnelCfg.DNSTT.PrivateKey = keyInfo.PrivateKeyPath
+		ctx.Output.Status("Curve25519 keys ready")
+	}
 
 	// Step 4: Create systemd service
 	currentStep++

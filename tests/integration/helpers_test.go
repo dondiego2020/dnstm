@@ -31,7 +31,7 @@ func NewTestEnv(t *testing.T) *TestEnv {
 	tmpDir := t.TempDir()
 	configDir := filepath.Join(tmpDir, "dnstm")
 
-	for _, subdir := range []string{"", "tunnels", "keys", "certs"} {
+	for _, subdir := range []string{"", "tunnels"} {
 		if err := os.MkdirAll(filepath.Join(configDir, subdir), 0755); err != nil {
 			t.Fatalf("failed to create dir: %v", err)
 		}

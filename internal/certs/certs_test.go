@@ -246,197 +246,82 @@ func TestCertsExist(t *testing.T) {
 	}
 }
 
-func TestManager_GetPaths(t *testing.T) {
-	m := NewManagerWithDir("/test/certs")
-
-	tests := []struct {
-		domain   string
-		wantCert string
-		wantKey  string
-	}{
-		{
-			domain:   "example.com",
-			wantCert: "/test/certs/example_com_cert.pem",
-			wantKey:  "/test/certs/example_com_key.pem",
-		},
-		{
-			domain:   "sub.domain.example.com",
-			wantCert: "/test/certs/sub_domain_example_com_cert.pem",
-			wantKey:  "/test/certs/sub_domain_example_com_key.pem",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.domain, func(t *testing.T) {
-			cert, key := m.GetPaths(tt.domain)
-			if cert != tt.wantCert {
-				t.Errorf("cert path = %q, want %q", cert, tt.wantCert)
-			}
-			if key != tt.wantKey {
-				t.Errorf("key path = %q, want %q", key, tt.wantKey)
-			}
-		})
-	}
-}
-
-func TestManager_GetOrCreate(t *testing.T) {
+func TestGetOrCreateInDir(t *testing.T) {
 	tmpDir := t.TempDir()
-	m := NewManagerWithDir(tmpDir)
-
 	domain := "test.example.com"
 
 	// First call should create
-	info1, err := m.GetOrCreate(domain)
+	info1, err := GetOrCreateInDir(tmpDir, domain)
 	if err != nil {
-		t.Fatalf("GetOrCreate failed: %v", err)
+		t.Fatalf("GetOrCreateInDir failed: %v", err)
 	}
 	if info1 == nil {
 		t.Fatal("expected non-nil CertInfo")
 	}
-	if info1.Domain != domain {
-		t.Errorf("domain = %q, want %q", info1.Domain, domain)
-	}
 	if info1.Fingerprint == "" {
 		t.Error("expected non-empty fingerprint")
 	}
+	if info1.CertPath != filepath.Join(tmpDir, "cert.pem") {
+		t.Errorf("cert path = %q, want %q", info1.CertPath, filepath.Join(tmpDir, "cert.pem"))
+	}
 
 	// Second call should return same cert
-	info2, err := m.GetOrCreate(domain)
+	info2, err := GetOrCreateInDir(tmpDir, domain)
 	if err != nil {
-		t.Fatalf("GetOrCreate (second call) failed: %v", err)
+		t.Fatalf("GetOrCreateInDir (second call) failed: %v", err)
 	}
 	if info2.Fingerprint != info1.Fingerprint {
 		t.Errorf("fingerprint changed: %q -> %q", info1.Fingerprint, info2.Fingerprint)
 	}
 }
 
-func TestManager_Get(t *testing.T) {
+func TestGetFromDir(t *testing.T) {
 	tmpDir := t.TempDir()
-	m := NewManagerWithDir(tmpDir)
-
 	domain := "test.example.com"
 
 	// Before generation
-	info := m.Get(domain)
+	info := GetFromDir(tmpDir)
 	if info != nil {
 		t.Error("expected nil before cert generation")
 	}
 
 	// After generation
-	_, err := m.Generate(domain)
+	_, err := GenerateInDir(tmpDir, domain)
 	if err != nil {
-		t.Fatalf("Generate failed: %v", err)
+		t.Fatalf("GenerateInDir failed: %v", err)
 	}
 
-	info = m.Get(domain)
+	info = GetFromDir(tmpDir)
 	if info == nil {
 		t.Fatal("expected non-nil after generation")
 	}
-	if info.Domain != domain {
-		t.Errorf("domain = %q, want %q", info.Domain, domain)
+	if info.CertPath != filepath.Join(tmpDir, "cert.pem") {
+		t.Errorf("cert path = %q, want %q", info.CertPath, filepath.Join(tmpDir, "cert.pem"))
 	}
 }
 
-func TestManager_Generate(t *testing.T) {
+func TestGenerateInDir(t *testing.T) {
 	tmpDir := t.TempDir()
-	m := NewManagerWithDir(tmpDir)
-
 	domain := "test.example.com"
 
-	info, err := m.Generate(domain)
+	info, err := GenerateInDir(tmpDir, domain)
 	if err != nil {
-		t.Fatalf("Generate failed: %v", err)
+		t.Fatalf("GenerateInDir failed: %v", err)
 	}
 
 	if info == nil {
 		t.Fatal("expected non-nil CertInfo")
-	}
-	if info.Domain != domain {
-		t.Errorf("domain = %q, want %q", info.Domain, domain)
 	}
 	if len(info.Fingerprint) != 64 {
 		t.Errorf("fingerprint length = %d, want 64", len(info.Fingerprint))
 	}
 
 	// Verify file paths
-	certPath, keyPath := m.GetPaths(domain)
-	if info.CertPath != certPath {
-		t.Errorf("cert path = %q, want %q", info.CertPath, certPath)
+	if info.CertPath != filepath.Join(tmpDir, "cert.pem") {
+		t.Errorf("cert path = %q, want %q", info.CertPath, filepath.Join(tmpDir, "cert.pem"))
 	}
-	if info.KeyPath != keyPath {
-		t.Errorf("key path = %q, want %q", info.KeyPath, keyPath)
-	}
-}
-
-func TestManager_List(t *testing.T) {
-	tmpDir := t.TempDir()
-	m := NewManagerWithDir(tmpDir)
-
-	// Create multiple certs
-	domains := []string{"a.example.com", "b.example.com", "c.example.com"}
-	for _, domain := range domains {
-		if _, err := m.Generate(domain); err != nil {
-			t.Fatalf("Generate(%q) failed: %v", domain, err)
-		}
-	}
-
-	// List should return all
-	certs := m.List()
-	if len(certs) != len(domains) {
-		t.Errorf("List() returned %d certs, want %d", len(certs), len(domains))
-	}
-
-	// Verify all domains are present
-	found := make(map[string]bool)
-	for _, cert := range certs {
-		found[cert.Domain] = true
-	}
-	for _, domain := range domains {
-		if !found[domain] {
-			t.Errorf("domain %q not found in list", domain)
-		}
-	}
-}
-
-func TestManager_Delete(t *testing.T) {
-	tmpDir := t.TempDir()
-	m := NewManagerWithDir(tmpDir)
-
-	domain := "test.example.com"
-
-	// Generate first
-	if _, err := m.Generate(domain); err != nil {
-		t.Fatalf("Generate failed: %v", err)
-	}
-
-	// Verify cert exists
-	if m.Get(domain) == nil {
-		t.Fatal("expected cert to exist before delete")
-	}
-
-	// Delete
-	if err := m.Delete(domain); err != nil {
-		t.Fatalf("Delete failed: %v", err)
-	}
-
-	// Verify cert is gone
-	if m.Get(domain) != nil {
-		t.Error("expected cert to be deleted")
-	}
-
-	// Delete again should not error
-	if err := m.Delete(domain); err != nil {
-		t.Errorf("Delete of nonexistent cert failed: %v", err)
-	}
-}
-
-func TestNewManager(t *testing.T) {
-	m := NewManager()
-
-	// Should use default base dir
-	cert, _ := m.GetPaths("test.com")
-	if !strings.HasPrefix(cert, BaseDir) {
-		t.Errorf("cert path = %q, expected prefix %q", cert, BaseDir)
+	if info.KeyPath != filepath.Join(tmpDir, "key.pem") {
+		t.Errorf("key path = %q, want %q", info.KeyPath, filepath.Join(tmpDir, "key.pem"))
 	}
 }
 

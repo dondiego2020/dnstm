@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"path/filepath"
 
 	"github.com/net2share/dnstm/internal/actions"
 	"github.com/net2share/dnstm/internal/certs"
@@ -52,26 +53,30 @@ func HandleTunnelStatus(ctx *actions.Context) error {
 	infoCfg.Sections = append(infoCfg.Sections, mainSection)
 
 	// Show certificate/key info based on transport type
+	tunnelDir := filepath.Join(config.TunnelsDir, tunnelCfg.Tag)
 	if tunnelCfg.Transport == config.TransportSlipstream {
-		certMgr := certs.NewManager()
-		certInfo := certMgr.Get(tunnelCfg.Domain)
-		if certInfo != nil {
+		certPath := filepath.Join(tunnelDir, "cert.pem")
+		if tunnelCfg.Slipstream != nil && tunnelCfg.Slipstream.Cert != "" {
+			certPath = tunnelCfg.Slipstream.Cert
+		}
+		fingerprint, err := certs.ReadCertificateFingerprint(certPath)
+		if err == nil {
 			certSection := actions.InfoSection{
 				Title: "Certificate Fingerprint",
 				Rows: []actions.InfoRow{
-					{Value: certs.FormatFingerprint(certInfo.Fingerprint)},
+					{Value: certs.FormatFingerprint(fingerprint)},
 				},
 			}
 			infoCfg.Sections = append(infoCfg.Sections, certSection)
 		}
 	} else if tunnelCfg.Transport == config.TransportDNSTT {
-		keyMgr := keys.NewManager()
-		keyInfo := keyMgr.Get(tunnelCfg.Domain)
-		if keyInfo != nil {
+		pubKeyPath := filepath.Join(tunnelDir, "server.pub")
+		pubKey, err := keys.ReadPublicKey(pubKeyPath)
+		if err == nil {
 			keySection := actions.InfoSection{
 				Title: "Public Key",
 				Rows: []actions.InfoRow{
-					{Value: keyInfo.PublicKey},
+					{Value: pubKey},
 				},
 			}
 			infoCfg.Sections = append(infoCfg.Sections, keySection)
@@ -107,19 +112,22 @@ func HandleTunnelStatus(ctx *actions.Context) error {
 	ctx.Output.Println(tunnel.GetFormattedInfo())
 
 	if tunnelCfg.Transport == config.TransportSlipstream {
-		certMgr := certs.NewManager()
-		certInfo := certMgr.Get(tunnelCfg.Domain)
-		if certInfo != nil {
+		certPath := filepath.Join(tunnelDir, "cert.pem")
+		if tunnelCfg.Slipstream != nil && tunnelCfg.Slipstream.Cert != "" {
+			certPath = tunnelCfg.Slipstream.Cert
+		}
+		fingerprint, err := certs.ReadCertificateFingerprint(certPath)
+		if err == nil {
 			ctx.Output.Println("Certificate Fingerprint:")
-			ctx.Output.Println(certs.FormatFingerprint(certInfo.Fingerprint))
+			ctx.Output.Println(certs.FormatFingerprint(fingerprint))
 			ctx.Output.Println()
 		}
 	} else if tunnelCfg.Transport == config.TransportDNSTT {
-		keyMgr := keys.NewManager()
-		keyInfo := keyMgr.Get(tunnelCfg.Domain)
-		if keyInfo != nil {
+		pubKeyPath := filepath.Join(tunnelDir, "server.pub")
+		pubKey, err := keys.ReadPublicKey(pubKeyPath)
+		if err == nil {
 			ctx.Output.Println("Public Key:")
-			ctx.Output.Println(keyInfo.PublicKey)
+			ctx.Output.Println(pubKey)
 			ctx.Output.Println()
 		}
 	}

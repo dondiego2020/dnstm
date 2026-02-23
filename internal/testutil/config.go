@@ -37,7 +37,7 @@ func NewTestEnv(t *testing.T) *TestEnv {
 	}
 
 	// Create subdirectories that config expects
-	for _, subdir := range []string{"tunnels", "keys", "certs"} {
+	for _, subdir := range []string{"tunnels"} {
 		if err := os.MkdirAll(filepath.Join(configDir, subdir), 0755); err != nil {
 			t.Fatalf("failed to create subdir %s: %v", subdir, err)
 		}
@@ -118,8 +118,8 @@ func (e *TestEnv) ConfigWithTunnel() *config.Config {
 		Port:      port,
 		Enabled:   boolPtr(true),
 		Slipstream: &config.SlipstreamConfig{
-			Cert: filepath.Join(e.ConfigDir, "certs", "test.example.com_cert.pem"),
-			Key:  filepath.Join(e.ConfigDir, "certs", "test.example.com_key.pem"),
+			Cert: filepath.Join(e.ConfigDir, "tunnels", "test-tunnel", "cert.pem"),
+			Key:  filepath.Join(e.ConfigDir, "tunnels", "test-tunnel", "key.pem"),
 		},
 	})
 	return cfg
@@ -136,17 +136,18 @@ func (e *TestEnv) ConfigWithMultipleTunnels(count int) *config.Config {
 			e.T.Fatalf("failed to allocate port: %v", err)
 		}
 
+		tag := fmt.Sprintf("tunnel-%c", 'a'+i)
 		domain := fmt.Sprintf("test%d.example.com", i)
 		cfg.Tunnels = append(cfg.Tunnels, config.TunnelConfig{
-			Tag:       fmt.Sprintf("tunnel-%c", 'a'+i),
+			Tag:       tag,
 			Transport: config.TransportSlipstream,
 			Backend:   "builtin-socks",
 			Domain:    domain,
 			Port:      port,
 			Enabled:   boolPtr(true),
 			Slipstream: &config.SlipstreamConfig{
-				Cert: filepath.Join(e.ConfigDir, "certs", domain+"_cert.pem"),
-				Key:  filepath.Join(e.ConfigDir, "certs", domain+"_key.pem"),
+				Cert: filepath.Join(e.ConfigDir, "tunnels", tag, "cert.pem"),
+				Key:  filepath.Join(e.ConfigDir, "tunnels", tag, "key.pem"),
 			},
 		})
 	}
@@ -183,10 +184,13 @@ func (e *TestEnv) CreateTempFile(name, content string) string {
 	return path
 }
 
-// CreateDummyCert creates a dummy cert and key file for testing.
-func (e *TestEnv) CreateDummyCert(domain string) (certPath, keyPath string) {
-	certPath = filepath.Join(e.ConfigDir, "certs", domain+"_cert.pem")
-	keyPath = filepath.Join(e.ConfigDir, "certs", domain+"_key.pem")
+// CreateDummyCert creates a dummy cert and key file for testing in a tunnel directory.
+func (e *TestEnv) CreateDummyCert(tag string) (certPath, keyPath string) {
+	tunnelDir := filepath.Join(e.ConfigDir, "tunnels", tag)
+	os.MkdirAll(tunnelDir, 0755)
+
+	certPath = filepath.Join(tunnelDir, "cert.pem")
+	keyPath = filepath.Join(tunnelDir, "key.pem")
 
 	// Write dummy content (not valid certs, but sufficient for config tests)
 	os.WriteFile(certPath, []byte("-----BEGIN CERTIFICATE-----\ndummy\n-----END CERTIFICATE-----"), 0644)
@@ -195,10 +199,13 @@ func (e *TestEnv) CreateDummyCert(domain string) (certPath, keyPath string) {
 	return certPath, keyPath
 }
 
-// CreateDummyKey creates a dummy DNSTT key file for testing.
-func (e *TestEnv) CreateDummyKey(domain string) (pubPath, privPath string) {
-	pubPath = filepath.Join(e.ConfigDir, "keys", domain+"_server.pub")
-	privPath = filepath.Join(e.ConfigDir, "keys", domain+"_server.key")
+// CreateDummyKey creates a dummy DNSTT key file for testing in a tunnel directory.
+func (e *TestEnv) CreateDummyKey(tag string) (pubPath, privPath string) {
+	tunnelDir := filepath.Join(e.ConfigDir, "tunnels", tag)
+	os.MkdirAll(tunnelDir, 0755)
+
+	pubPath = filepath.Join(tunnelDir, "server.pub")
+	privPath = filepath.Join(tunnelDir, "server.key")
 
 	// Write dummy hex keys (64 chars each for Curve25519)
 	dummyKey := "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"

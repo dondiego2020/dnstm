@@ -46,8 +46,8 @@
       "domain": "t1.example.com",
       "port": 5310,
       "slipstream": {
-        "cert": "/etc/dnstm/certs/t1_example_com_cert.pem",
-        "key": "/etc/dnstm/certs/t1_example_com_key.pem"
+        "cert": "/etc/dnstm/tunnels/tunnel-1/cert.pem",
+        "key": "/etc/dnstm/tunnels/tunnel-1/key.pem"
       }
     },
     {
@@ -59,7 +59,7 @@
       "port": 5311,
       "dnstt": {
         "mtu": 1232,
-        "private_key": "/etc/dnstm/keys/t2_example_com_server.key"
+        "private_key": "/etc/dnstm/tunnels/tunnel-2/server.key"
       }
     }
   ],
@@ -142,8 +142,8 @@ High-performance DNS tunnel with TLS encryption.
   "domain": "t.example.com",
   "port": 5310,
   "slipstream": {
-    "cert": "/etc/dnstm/certs/t_example_com_cert.pem",
-    "key": "/etc/dnstm/certs/t_example_com_key.pem"
+    "cert": "/etc/dnstm/tunnels/my-tunnel/cert.pem",
+    "key": "/etc/dnstm/tunnels/my-tunnel/key.pem"
   }
 }
 ```
@@ -163,7 +163,7 @@ Classic DNS tunnel using Curve25519 keys.
   "port": 5311,
   "dnstt": {
     "mtu": 1232,
-    "private_key": "/etc/dnstm/keys/t_example_com_server.key"
+    "private_key": "/etc/dnstm/tunnels/my-tunnel/server.key"
   }
 }
 ```
@@ -201,29 +201,24 @@ Classic DNS tunnel using Curve25519 keys.
 /etc/dnstm/
 ├── config.json           # Main configuration (JSON)
 ├── dnsrouter.yaml        # DNS router config (multi-mode, internal)
-├── certs/                # TLS certificates (Slipstream)
-│   ├── t_example_com_cert.pem
-│   └── t_example_com_key.pem
-├── keys/                 # Curve25519 keys (DNSTT)
-│   ├── t_example_com_server.key
-│   └── t_example_com_server.pub
-└── tunnels/              # Per-tunnel configs
+└── tunnels/              # Per-tunnel directories
     └── <tag>/
+        ├── cert.pem      # TLS certificate (Slipstream)
+        ├── key.pem       # TLS private key (Slipstream)
+        ├── server.key    # Curve25519 private key (DNSTT)
+        ├── server.pub    # Curve25519 public key (DNSTT)
         └── config.json   # Shadowsocks config for SIP003
 ```
 
 ## Certificates (Slipstream)
 
-**Directory**: `/etc/dnstm/certs/`
-
-Files named by domain (dots replaced with underscores):
-- `t_example_com_cert.pem`
-- `t_example_com_key.pem`
+**Location**: `/etc/dnstm/tunnels/<tag>/cert.pem` and `key.pem`
 
 Properties:
 - ECDSA P-256 algorithm
 - 10-year validity
 - Self-signed
+- Auto-generated per tunnel if not provided
 
 View fingerprint:
 ```bash
@@ -232,11 +227,9 @@ dnstm tunnel status <tag>
 
 ## Keys (DNSTT)
 
-**Directory**: `/etc/dnstm/keys/`
+**Location**: `/etc/dnstm/tunnels/<tag>/server.key` and `server.pub`
 
-Files named by domain:
-- `t_example_com_server.key` (private)
-- `t_example_com_server.pub` (public)
+Auto-generated per tunnel if not provided.
 
 View public key:
 ```bash
@@ -263,9 +256,8 @@ Services run as `dnstm` system user:
 
 Directory permissions:
 - `/etc/dnstm/` - 755
-- `/etc/dnstm/certs/` - 750
-- `/etc/dnstm/keys/` - 750
 - `/etc/dnstm/tunnels/` - 750
+- `/etc/dnstm/tunnels/<tag>/` - 750
 
 ## Firewall Rules
 

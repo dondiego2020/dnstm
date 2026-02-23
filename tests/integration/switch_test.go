@@ -30,8 +30,8 @@ func TestSingleMode_TunnelSwitch(t *testing.T) {
 				Domain:    "a.example.com",
 				Port:      5310,
 				Slipstream: &config.SlipstreamConfig{
-					Cert: "/etc/dnstm/certs/a_example_com_cert.pem",
-					Key:  "/etc/dnstm/certs/a_example_com_key.pem",
+					Cert: "/etc/dnstm/tunnels/tunnel-a/cert.pem",
+					Key:  "/etc/dnstm/tunnels/tunnel-a/key.pem",
 				},
 			},
 			{
@@ -42,7 +42,7 @@ func TestSingleMode_TunnelSwitch(t *testing.T) {
 				Port:      5311,
 				DNSTT: &config.DNSTTConfig{
 					MTU:        1232,
-					PrivateKey: "/etc/dnstm/keys/b_example_com_server.key",
+					PrivateKey: "/etc/dnstm/tunnels/tunnel-b/server.key",
 				},
 			},
 		},

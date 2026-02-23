@@ -13,14 +13,14 @@ import (
 func TestDNSTT_LocalMode(t *testing.T) {
 	env := NewE2EEnv(t)
 
-	// Generate DNSTT keys
-	keysDir := filepath.Join(env.ConfigDir, "keys")
-	if err := os.MkdirAll(keysDir, 0755); err != nil {
-		t.Fatalf("failed to create keys dir: %v", err)
+	// Generate DNSTT keys in per-tunnel directory
+	tunnelDir := filepath.Join(env.ConfigDir, "tunnels", "test-dnstt")
+	if err := os.MkdirAll(tunnelDir, 0755); err != nil {
+		t.Fatalf("failed to create tunnel dir: %v", err)
 	}
 
-	privPath := filepath.Join(keysDir, "test_server.key")
-	pubPath := filepath.Join(keysDir, "test_server.pub")
+	privPath := filepath.Join(tunnelDir, "server.key")
+	pubPath := filepath.Join(tunnelDir, "server.pub")
 
 	pubKey, err := keys.Generate(privPath, pubPath)
 	if err != nil {

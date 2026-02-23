@@ -159,196 +159,78 @@ func TestKeysExist(t *testing.T) {
 	}
 }
 
-func TestManager_GetPaths(t *testing.T) {
-	m := NewManagerWithDir("/test/keys")
-
-	tests := []struct {
-		domain   string
-		wantPriv string
-		wantPub  string
-	}{
-		{
-			domain:   "example.com",
-			wantPriv: "/test/keys/example_com_server.key",
-			wantPub:  "/test/keys/example_com_server.pub",
-		},
-		{
-			domain:   "sub.domain.example.com",
-			wantPriv: "/test/keys/sub_domain_example_com_server.key",
-			wantPub:  "/test/keys/sub_domain_example_com_server.pub",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.domain, func(t *testing.T) {
-			priv, pub := m.GetPaths(tt.domain)
-			if priv != tt.wantPriv {
-				t.Errorf("private path = %q, want %q", priv, tt.wantPriv)
-			}
-			if pub != tt.wantPub {
-				t.Errorf("public path = %q, want %q", pub, tt.wantPub)
-			}
-		})
-	}
-}
-
-func TestManager_GetOrCreate(t *testing.T) {
+func TestGetOrCreateInDir(t *testing.T) {
 	tmpDir := t.TempDir()
-	m := NewManagerWithDir(tmpDir)
-
-	domain := "test.example.com"
 
 	// First call should create
-	info1, err := m.GetOrCreate(domain)
+	info1, err := GetOrCreateInDir(tmpDir)
 	if err != nil {
-		t.Fatalf("GetOrCreate failed: %v", err)
+		t.Fatalf("GetOrCreateInDir failed: %v", err)
 	}
 	if info1 == nil {
 		t.Fatal("expected non-nil KeyInfo")
 	}
-	if info1.Domain != domain {
-		t.Errorf("domain = %q, want %q", info1.Domain, domain)
-	}
 	if info1.PublicKey == "" {
 		t.Error("expected non-empty public key")
 	}
+	if info1.PrivateKeyPath != filepath.Join(tmpDir, "server.key") {
+		t.Errorf("private key path = %q, want %q", info1.PrivateKeyPath, filepath.Join(tmpDir, "server.key"))
+	}
 
 	// Second call should return same key
-	info2, err := m.GetOrCreate(domain)
+	info2, err := GetOrCreateInDir(tmpDir)
 	if err != nil {
-		t.Fatalf("GetOrCreate (second call) failed: %v", err)
+		t.Fatalf("GetOrCreateInDir (second call) failed: %v", err)
 	}
 	if info2.PublicKey != info1.PublicKey {
 		t.Errorf("public key changed: %q -> %q", info1.PublicKey, info2.PublicKey)
 	}
 }
 
-func TestManager_Get(t *testing.T) {
+func TestGetFromDir(t *testing.T) {
 	tmpDir := t.TempDir()
-	m := NewManagerWithDir(tmpDir)
-
-	domain := "test.example.com"
 
 	// Before generation
-	info := m.Get(domain)
+	info := GetFromDir(tmpDir)
 	if info != nil {
 		t.Error("expected nil before key generation")
 	}
 
 	// After generation
-	_, err := m.Generate(domain)
+	_, err := GenerateInDir(tmpDir)
 	if err != nil {
-		t.Fatalf("Generate failed: %v", err)
+		t.Fatalf("GenerateInDir failed: %v", err)
 	}
 
-	info = m.Get(domain)
+	info = GetFromDir(tmpDir)
 	if info == nil {
 		t.Fatal("expected non-nil after generation")
 	}
-	if info.Domain != domain {
-		t.Errorf("domain = %q, want %q", info.Domain, domain)
+	if info.PrivateKeyPath != filepath.Join(tmpDir, "server.key") {
+		t.Errorf("private key path = %q, want %q", info.PrivateKeyPath, filepath.Join(tmpDir, "server.key"))
 	}
 }
 
-func TestManager_Generate(t *testing.T) {
+func TestGenerateInDir(t *testing.T) {
 	tmpDir := t.TempDir()
-	m := NewManagerWithDir(tmpDir)
 
-	domain := "test.example.com"
-
-	info, err := m.Generate(domain)
+	info, err := GenerateInDir(tmpDir)
 	if err != nil {
-		t.Fatalf("Generate failed: %v", err)
+		t.Fatalf("GenerateInDir failed: %v", err)
 	}
 
 	if info == nil {
 		t.Fatal("expected non-nil KeyInfo")
-	}
-	if info.Domain != domain {
-		t.Errorf("domain = %q, want %q", info.Domain, domain)
 	}
 	if len(info.PublicKey) != 64 {
 		t.Errorf("public key length = %d, want 64", len(info.PublicKey))
 	}
 
 	// Verify file paths
-	privPath, pubPath := m.GetPaths(domain)
-	if info.PrivateKeyPath != privPath {
-		t.Errorf("private key path = %q, want %q", info.PrivateKeyPath, privPath)
+	if info.PrivateKeyPath != filepath.Join(tmpDir, "server.key") {
+		t.Errorf("private key path = %q, want %q", info.PrivateKeyPath, filepath.Join(tmpDir, "server.key"))
 	}
-	if info.PublicKeyPath != pubPath {
-		t.Errorf("public key path = %q, want %q", info.PublicKeyPath, pubPath)
-	}
-}
-
-func TestManager_List(t *testing.T) {
-	tmpDir := t.TempDir()
-	m := NewManagerWithDir(tmpDir)
-
-	// Create multiple keys
-	domains := []string{"a.example.com", "b.example.com", "c.example.com"}
-	for _, domain := range domains {
-		if _, err := m.Generate(domain); err != nil {
-			t.Fatalf("Generate(%q) failed: %v", domain, err)
-		}
-	}
-
-	// List should return all
-	keys := m.List()
-	if len(keys) != len(domains) {
-		t.Errorf("List() returned %d keys, want %d", len(keys), len(domains))
-	}
-
-	// Verify all domains are present
-	found := make(map[string]bool)
-	for _, key := range keys {
-		found[key.Domain] = true
-	}
-	for _, domain := range domains {
-		if !found[domain] {
-			t.Errorf("domain %q not found in list", domain)
-		}
-	}
-}
-
-func TestManager_Delete(t *testing.T) {
-	tmpDir := t.TempDir()
-	m := NewManagerWithDir(tmpDir)
-
-	domain := "test.example.com"
-
-	// Generate first
-	if _, err := m.Generate(domain); err != nil {
-		t.Fatalf("Generate failed: %v", err)
-	}
-
-	// Verify keys exist
-	if m.Get(domain) == nil {
-		t.Fatal("expected keys to exist before delete")
-	}
-
-	// Delete
-	if err := m.Delete(domain); err != nil {
-		t.Fatalf("Delete failed: %v", err)
-	}
-
-	// Verify keys are gone
-	if m.Get(domain) != nil {
-		t.Error("expected keys to be deleted")
-	}
-
-	// Delete again should not error
-	if err := m.Delete(domain); err != nil {
-		t.Errorf("Delete of nonexistent keys failed: %v", err)
-	}
-}
-
-func TestNewManager(t *testing.T) {
-	m := NewManager()
-
-	// Should use default base dir
-	priv, _ := m.GetPaths("test.com")
-	if !strings.HasPrefix(priv, BaseDir) {
-		t.Errorf("private path = %q, expected prefix %q", priv, BaseDir)
+	if info.PublicKeyPath != filepath.Join(tmpDir, "server.pub") {
+		t.Errorf("public key path = %q, want %q", info.PublicKeyPath, filepath.Join(tmpDir, "server.pub"))
 	}
 }
