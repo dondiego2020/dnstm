@@ -11,6 +11,14 @@ import (
 )
 
 const (
+	// udpReadBufSize is the SO_RCVBUF size for the listener and backend connections.
+	udpReadBufSize = 4 * 1024 * 1024 // 4 MB
+
+	// udpWriteBufSize is the SO_SNDBUF size.
+	udpWriteBufSize = 4 * 1024 * 1024 // 4 MB
+)
+
+const (
 	// MaxPacketSize is the maximum DNS packet size we handle
 	MaxPacketSize = 4096
 
@@ -43,14 +51,27 @@ type pendingQuery struct {
 
 // backendConn manages a persistent connection to a backend
 type backendConn struct {
-	addr    *net.UDPAddr
-	conn    *net.UDPConn
-	mu      sync.Mutex
-	pending map[uint16]*pendingQuery // keyed by DNS transaction ID
-	ctx     context.Context
-	cancel  context.CancelFunc
-	wg      sync.WaitGroup
-	timeout time.Duration
+	addr     *net.UDPAddr
+	conn     *net.UDPConn
+	mu       sync.Mutex
+	pending  map[uint16]*pendingQuery // keyed by DNS transaction ID
+	ctx      context.Context
+	cancel   context.CancelFunc
+	wg       sync.WaitGroup
+	timeout  time.Duration
+	deadOnce sync.Once
+	onDead   func() // Called once when the connection dies unexpectedly
+}
+
+// markDead signals that this connection is dead. Safe to call multiple times.
+// Cancels the context (waking pending queries) and triggers onDead once.
+func (bc *backendConn) markDead() {
+	bc.deadOnce.Do(func() {
+		bc.cancel()
+		if bc.onDead != nil {
+			go bc.onDead()
+		}
+	})
 }
 
 // Router is a minimal DNS router that forwards raw packets.
@@ -102,6 +123,11 @@ func (r *Router) Start() error {
 		return fmt.Errorf("failed to listen: %w", err)
 	}
 
+	// Larger socket buffers reduce packet loss under load.
+	// These are best-effort: the kernel may cap them lower.
+	_ = conn.SetReadBuffer(udpReadBufSize)
+	_ = conn.SetWriteBuffer(udpWriteBufSize)
+
 	r.conn = conn
 	r.ctx, r.cancel = context.WithCancel(context.Background())
 
@@ -132,6 +158,22 @@ func (r *Router) Stop() error {
 	r.wg.Wait()
 	log.Printf("[dnsrouter] Stopped")
 	return nil
+}
+
+// removeBackendConn removes a dead backend connection from the pool so the next
+// query will create a fresh one. Safe to call multiple times.
+func (r *Router) removeBackendConn(backend string) {
+	r.backendsMu.Lock()
+	bc, exists := r.backends[backend]
+	if exists {
+		delete(r.backends, backend)
+	}
+	r.backendsMu.Unlock()
+
+	if exists {
+		bc.close()
+		log.Printf("[dnsrouter] Removed dead connection to %s (will reconnect on next query)", backend)
+	}
 }
 
 // serve handles incoming DNS queries.
@@ -266,6 +308,7 @@ func (r *Router) getBackendConn(backend string) (*backendConn, error) {
 		ctx:     ctx,
 		cancel:  cancel,
 		timeout: r.timeout,
+		onDead:  func() { r.removeBackendConn(backend) },
 	}
 
 	// Start response reader goroutine
@@ -390,7 +433,8 @@ func (bc *backendConn) readResponses() {
 				return
 			}
 			log.Printf("[dnsrouter] Backend read error: %v", err)
-			continue
+			bc.markDead()
+			return
 		}
 
 		if n < 2 {
