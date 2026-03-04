@@ -3,8 +3,8 @@ package dnsrouter
 import (
 	"fmt"
 
-	"github.com/net2share/dnstm/internal/service"
-	"github.com/net2share/dnstm/internal/system"
+	"github.com/dondiego2020/dnstm/internal/service"
+	"github.com/dondiego2020/dnstm/internal/system"
 )
 
 const (

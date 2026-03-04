@@ -1,11 +1,11 @@
 package updater
 
 import (
-	"github.com/net2share/dnstm/internal/binary"
-	"github.com/net2share/dnstm/internal/config"
-	"github.com/net2share/dnstm/internal/proxy"
-	"github.com/net2share/dnstm/internal/router"
-	"github.com/net2share/dnstm/internal/service"
+	"github.com/dondiego2020/dnstm/internal/binary"
+	"github.com/dondiego2020/dnstm/internal/config"
+	"github.com/dondiego2020/dnstm/internal/proxy"
+	"github.com/dondiego2020/dnstm/internal/router"
+	"github.com/dondiego2020/dnstm/internal/service"
 )
 
 // ServiceInfo contains information about a running service.

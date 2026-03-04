@@ -4,9 +4,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/net2share/dnstm/internal/config"
-	"github.com/net2share/dnstm/internal/dnsrouter"
-	"github.com/net2share/dnstm/internal/router"
+	"github.com/dondiego2020/dnstm/internal/config"
+	"github.com/dondiego2020/dnstm/internal/dnsrouter"
+	"github.com/dondiego2020/dnstm/internal/router"
 )
 
 // CleanupResult contains the results of a cleanup operation.

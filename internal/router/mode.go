@@ -5,8 +5,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/net2share/dnstm/internal/network"
-	"github.com/net2share/dnstm/internal/transport"
+	"github.com/dondiego2020/dnstm/internal/network"
+	"github.com/dondiego2020/dnstm/internal/transport"
 )
 
 // ModeSnapshot captures the state before a mode switch for rollback.

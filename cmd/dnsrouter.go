@@ -7,9 +7,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/net2share/dnstm/internal/config"
-	"github.com/net2share/dnstm/internal/dnsrouter"
-	"github.com/net2share/dnstm/internal/network"
+	"github.com/dondiego2020/dnstm/internal/config"
+	"github.com/dondiego2020/dnstm/internal/dnsrouter"
+	"github.com/dondiego2020/dnstm/internal/network"
 	"github.com/spf13/cobra"
 )
 

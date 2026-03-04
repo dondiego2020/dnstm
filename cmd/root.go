@@ -7,11 +7,11 @@ import (
 	"strings"
 
 	// Import handlers to register them with actions
-	_ "github.com/net2share/dnstm/internal/handlers"
+	_ "github.com/dondiego2020/dnstm/internal/handlers"
 
-	"github.com/net2share/dnstm/internal/menu"
-	"github.com/net2share/dnstm/internal/transport"
-	"github.com/net2share/dnstm/internal/version"
+	"github.com/dondiego2020/dnstm/internal/menu"
+	"github.com/dondiego2020/dnstm/internal/transport"
+	"github.com/dondiego2020/dnstm/internal/version"
 	"github.com/net2share/go-corelib/osdetect"
 	"github.com/spf13/cobra"
 )
@@ -28,7 +28,7 @@ func requireInstalled() error {
 var rootCmd = &cobra.Command{
 	Use:   "dnstm",
 	Short: "DNS Tunnel Manager",
-	Long:  "DNS Tunnel Manager - https://github.com/net2share/dnstm",
+	Long:  "DNS Tunnel Manager - https://github.com/dondiego2020/dnstm",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := osdetect.RequireRoot(); err != nil {
 			return err

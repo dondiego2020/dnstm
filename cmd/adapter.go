@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/net2share/dnstm/internal/actions"
-	"github.com/net2share/dnstm/internal/handlers"
-	"github.com/net2share/dnstm/internal/router"
+	"github.com/dondiego2020/dnstm/internal/actions"
+	"github.com/dondiego2020/dnstm/internal/handlers"
+	"github.com/dondiego2020/dnstm/internal/router"
 	"github.com/net2share/go-corelib/osdetect"
 	"github.com/spf13/cobra"
 )

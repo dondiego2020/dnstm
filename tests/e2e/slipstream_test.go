@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/net2share/dnstm/internal/certs"
+	"github.com/dondiego2020/dnstm/internal/certs"
 )
 
 func TestSlipstream_LocalMode(t *testing.T) {

@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/net2share/dnstm/internal/testutil"
+	"github.com/dondiego2020/dnstm/internal/testutil"
 )
 
 var testBinManager *testutil.TestBinaryManager

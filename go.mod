@@ -1,4 +1,4 @@
-module github.com/net2share/dnstm
+module github.com/dondiego2020/dnstm
 
 go 1.24.0
 

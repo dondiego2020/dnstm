@@ -7,10 +7,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/net2share/dnstm/internal/binary"
-	"github.com/net2share/dnstm/internal/config"
-	"github.com/net2share/dnstm/internal/service"
-	"github.com/net2share/dnstm/internal/system"
+	"github.com/dondiego2020/dnstm/internal/binary"
+	"github.com/dondiego2020/dnstm/internal/config"
+	"github.com/dondiego2020/dnstm/internal/service"
+	"github.com/dondiego2020/dnstm/internal/system"
 )
 
 const (

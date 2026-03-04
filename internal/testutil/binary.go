@@ -3,7 +3,7 @@ package testutil
 import (
 	"fmt"
 
-	"github.com/net2share/dnstm/internal/binary"
+	"github.com/dondiego2020/dnstm/internal/binary"
 )
 
 // TestBinaryManager manages binaries for testing.

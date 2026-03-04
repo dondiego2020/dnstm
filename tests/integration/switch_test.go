@@ -3,9 +3,9 @@ package integration
 import (
 	"testing"
 
-	"github.com/net2share/dnstm/internal/config"
-	"github.com/net2share/dnstm/internal/service"
-	"github.com/net2share/dnstm/internal/testutil"
+	"github.com/dondiego2020/dnstm/internal/config"
+	"github.com/dondiego2020/dnstm/internal/service"
+	"github.com/dondiego2020/dnstm/internal/testutil"
 )
 
 // TestSingleMode_TunnelSwitch tests that switching tunnels in single mode

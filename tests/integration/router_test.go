@@ -3,8 +3,8 @@ package integration
 import (
 	"testing"
 
-	"github.com/net2share/dnstm/internal/config"
-	"github.com/net2share/dnstm/internal/service"
+	"github.com/dondiego2020/dnstm/internal/config"
+	"github.com/dondiego2020/dnstm/internal/service"
 )
 
 func TestRouterMode_Single(t *testing.T) {

@@ -3,8 +3,8 @@ package actions
 import (
 	"fmt"
 
-	"github.com/net2share/dnstm/internal/config"
-	"github.com/net2share/dnstm/internal/router"
+	"github.com/dondiego2020/dnstm/internal/config"
+	"github.com/dondiego2020/dnstm/internal/router"
 )
 
 func init() {

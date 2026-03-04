@@ -5,9 +5,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/net2share/dnstm/internal/actions"
-	"github.com/net2share/dnstm/internal/updater"
-	"github.com/net2share/dnstm/internal/version"
+	"github.com/dondiego2020/dnstm/internal/actions"
+	"github.com/dondiego2020/dnstm/internal/updater"
+	"github.com/dondiego2020/dnstm/internal/version"
 	"github.com/net2share/go-corelib/tui"
 )
 

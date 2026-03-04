@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/net2share/dnstm/internal/system"
+	"github.com/dondiego2020/dnstm/internal/system"
 	"golang.org/x/crypto/curve25519"
 )
 

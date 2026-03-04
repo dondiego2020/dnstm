@@ -3,11 +3,11 @@ package installer
 import (
 	"os"
 
-	"github.com/net2share/dnstm/internal/actions"
-	"github.com/net2share/dnstm/internal/dnsrouter"
-	"github.com/net2share/dnstm/internal/network"
-	"github.com/net2share/dnstm/internal/proxy"
-	"github.com/net2share/dnstm/internal/system"
+	"github.com/dondiego2020/dnstm/internal/actions"
+	"github.com/dondiego2020/dnstm/internal/dnsrouter"
+	"github.com/dondiego2020/dnstm/internal/network"
+	"github.com/dondiego2020/dnstm/internal/proxy"
+	"github.com/dondiego2020/dnstm/internal/system"
 )
 
 // PerformFullUninstall removes all dnstm components from the system.

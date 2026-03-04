@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/net2share/dnstm/internal/binary"
+	"github.com/dondiego2020/dnstm/internal/binary"
 )
 
 // UpdateOptions configures the update behavior.
@@ -132,7 +132,7 @@ func PerformSelfUpdate(latestVersion string, statusFn StatusFunc) error {
 	arch := runtime.GOARCH
 	osName := runtime.GOOS
 	downloadURL := fmt.Sprintf(
-		"https://github.com/net2share/dnstm/releases/download/%s/dnstm-%s-%s",
+		"https://github.com/dondiego2020/dnstm/releases/download/%s/dnstm-%s-%s",
 		latestVersion, osName, arch,
 	)
 

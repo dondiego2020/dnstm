@@ -16,7 +16,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/net2share/dnstm/internal/system"
+	"github.com/dondiego2020/dnstm/internal/system"
 )
 
 // CertInfo holds certificate information.

@@ -3,9 +3,9 @@ package transport
 import (
 	"fmt"
 
-	"github.com/net2share/dnstm/internal/binary"
-	"github.com/net2share/dnstm/internal/config"
-	"github.com/net2share/dnstm/internal/log"
+	"github.com/dondiego2020/dnstm/internal/binary"
+	"github.com/dondiego2020/dnstm/internal/config"
+	"github.com/dondiego2020/dnstm/internal/log"
 )
 
 // StatusFunc is a callback for reporting installation status messages.

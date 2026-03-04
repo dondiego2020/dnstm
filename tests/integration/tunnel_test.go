@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/net2share/dnstm/internal/config"
+	"github.com/dondiego2020/dnstm/internal/config"
 )
 
 func TestTunnelAdd_Slipstream(t *testing.T) {

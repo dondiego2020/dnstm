@@ -6,9 +6,9 @@ import (
 	"encoding/base64"
 	"fmt"
 
-	"github.com/net2share/dnstm/internal/actions"
-	"github.com/net2share/dnstm/internal/config"
-	"github.com/net2share/dnstm/internal/transport"
+	"github.com/dondiego2020/dnstm/internal/actions"
+	"github.com/dondiego2020/dnstm/internal/config"
+	"github.com/dondiego2020/dnstm/internal/transport"
 	"github.com/net2share/go-corelib/osdetect"
 )
 

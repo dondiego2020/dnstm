@@ -13,8 +13,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/net2share/dnstm/internal/binary"
-	"github.com/net2share/dnstm/internal/testutil"
+	"github.com/dondiego2020/dnstm/internal/binary"
+	"github.com/dondiego2020/dnstm/internal/testutil"
 )
 
 // E2EEnv provides an environment for E2E tests.

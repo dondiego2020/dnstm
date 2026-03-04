@@ -1,6 +1,6 @@
 package main
 
-import "github.com/net2share/dnstm/cmd"
+import "github.com/dondiego2020/dnstm/cmd"
 
 var (
 	Version   = "dev"

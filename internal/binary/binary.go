@@ -11,7 +11,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/net2share/dnstm/internal/log"
+	"github.com/dondiego2020/dnstm/internal/log"
 	"github.com/ulikunitz/xz"
 )
 

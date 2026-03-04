@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/net2share/dnstm/internal/actions"
-	"github.com/net2share/dnstm/internal/certs"
-	"github.com/net2share/dnstm/internal/config"
-	"github.com/net2share/dnstm/internal/keys"
-	"github.com/net2share/dnstm/internal/router"
+	"github.com/dondiego2020/dnstm/internal/actions"
+	"github.com/dondiego2020/dnstm/internal/certs"
+	"github.com/dondiego2020/dnstm/internal/config"
+	"github.com/dondiego2020/dnstm/internal/keys"
+	"github.com/dondiego2020/dnstm/internal/router"
 )
 
 func init() {

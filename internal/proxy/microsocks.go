@@ -7,8 +7,8 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/net2share/dnstm/internal/binary"
-	"github.com/net2share/dnstm/internal/service"
+	"github.com/dondiego2020/dnstm/internal/binary"
+	"github.com/dondiego2020/dnstm/internal/service"
 )
 
 const (

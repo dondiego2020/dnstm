@@ -1,7 +1,7 @@
 package transport
 
 import (
-	"github.com/net2share/dnstm/internal/binary"
+	"github.com/dondiego2020/dnstm/internal/binary"
 )
 
 // IsInstalled checks if all required transport binaries are installed.

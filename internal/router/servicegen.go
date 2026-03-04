@@ -1,9 +1,9 @@
 package router
 
 import (
-	"github.com/net2share/dnstm/internal/config"
-	"github.com/net2share/dnstm/internal/network"
-	"github.com/net2share/dnstm/internal/transport"
+	"github.com/dondiego2020/dnstm/internal/config"
+	"github.com/dondiego2020/dnstm/internal/network"
+	"github.com/dondiego2020/dnstm/internal/transport"
 )
 
 // ServiceMode defines how a transport service should bind.

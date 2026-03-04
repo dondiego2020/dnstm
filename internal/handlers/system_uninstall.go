@@ -1,8 +1,8 @@
 package handlers
 
 import (
-	"github.com/net2share/dnstm/internal/actions"
-	"github.com/net2share/dnstm/internal/installer"
+	"github.com/dondiego2020/dnstm/internal/actions"
+	"github.com/dondiego2020/dnstm/internal/installer"
 )
 
 func init() {

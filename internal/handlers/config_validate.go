@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/net2share/dnstm/internal/actions"
-	"github.com/net2share/dnstm/internal/config"
-	"github.com/net2share/dnstm/internal/router"
+	"github.com/dondiego2020/dnstm/internal/actions"
+	"github.com/dondiego2020/dnstm/internal/config"
+	"github.com/dondiego2020/dnstm/internal/router"
 )
 
 func init() {

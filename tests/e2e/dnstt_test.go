@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/net2share/dnstm/internal/keys"
+	"github.com/dondiego2020/dnstm/internal/keys"
 )
 
 func TestDNSTT_LocalMode(t *testing.T) {

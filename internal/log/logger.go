@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/net2share/dnstm/internal/config"
+	"github.com/dondiego2020/dnstm/internal/config"
 )
 
 // Level defines the log level.

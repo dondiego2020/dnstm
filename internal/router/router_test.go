@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/net2share/dnstm/internal/config"
+	"github.com/dondiego2020/dnstm/internal/config"
 )
 
 func TestValidatePort(t *testing.T) {

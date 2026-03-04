@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-REPO="net2share/dnstm"
+REPO="dondiego2020/dnstm"
 INSTALL_DIR="/usr/local/bin"
 BINARY_NAME="dnstm"
 FORCE=false
